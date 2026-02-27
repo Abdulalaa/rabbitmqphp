@@ -83,6 +83,6 @@ public function registerUser($username, $password)
 	return array("status" => "error", "message" => "Username Taken");
 }
 // Logout Function goes here
-
+public function
 }
 ?>
