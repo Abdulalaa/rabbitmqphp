@@ -14,7 +14,7 @@ function doLogin($username,$password)
 {
 	// New instance of db class
 	$login = new loginDB();
-	// Pass un and pw to db
+	// Attempt login using library
     	return $login->validateLogin($username,$password);
 }
 
@@ -23,10 +23,27 @@ function doRegister($username, $password)
 {
 	// New instance
 	$login = new loginDB();
-	// Pass un and pw to db
+	// Attempt registration using library
 	return $login->registerUser($username, $password);
 }
 
+// Wrapper function for logout
+function doLogout($username)
+{
+	// New instance
+	$login = new loginDB();
+	// Attempt logout using library
+	return $login->logoutUser($username);
+}
+
+// Wrapper function for validating session
+function doValidate($session_id)
+{
+	// New instance
+	$login = new loginDB();
+	// Attempt session validation
+	return $login->validateSession($session_id);
+}
 
 // Switch Statement function for mapping request to correct loginDB function in login.php.inc
 // $request is a PHP array
@@ -50,14 +67,16 @@ function requestProcessor($request)
 		case "register":
 		  	return doRegister($request['username'], $request['password']);
 		case "validate_session":
-		  	// Still need to research and implement (request and return token from db?)
+			return doValidate($request['sessionId']);
+		case "logout":
+			return doLogout($request['username']);
 	}
 	// Success message
   	return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 
 // Create listener, rabbitMQ.ini for vpn IP and port conf
-$server = new rabbitMQServer("testRabbitMQ.ini","testServer");
+$server = new rabbitMQServer(__DIR__."/../testRabbitMQ.ini","testServer");
 
 // Infinite listening loop
 // Message received, processed in requestProcessor, return array arrives, sends back over to webserver

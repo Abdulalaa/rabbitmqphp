@@ -9,8 +9,8 @@ private $logindb;
 // Constructor, automatically called when class is called 
 public function __construct()
 {
-	// TCP connection to MySQL server, local access on backend VM only
-	$this->logindb = new mysqli("127.0.0.1","backendVM","password","it490_db");
+	// TCP connection to MySQL server, local access on database VM only
+	$this->logindb = new mysqli("127.0.0.1","backendVM","AART490","it490_db");
 
 	// Check if failed connection or credentials
 	if ($this->logindb->connect_errno != 0)
@@ -28,7 +28,7 @@ public function validateLogin($username,$password)
 	// Sanitize username against SQL Injection
 	$un = $this->logindb->real_escape_string($username);
 	// Query to find row of user attempting login
-	$statement = "select * from users where screenname = '$un'";
+	$statement = "select * from users where username = '$un'";
 	// Execute query in MySQL database
 	$response = $this->logindb->query($statement);
 
@@ -82,7 +82,54 @@ public function registerUser($username, $password)
 	// If registration fails bc of unique constraint in db, error
 	return array("status" => "error", "message" => "Username Taken");
 }
-// Logout Function goes here
-public function
+// Logout Function, destroy session token 
+// Only need username
+public function logoutUser($username)
+{
+	// Sanitize username for security
+	$un = $this->logindb->real_escape_string($username);
+
+	// Query to destroy user's current session to log them out
+	// Set session_id to NULL
+	$update = "UPDATE users SET session_id = NULL WHERE username = '$un'";
+
+	// Attempt logout
+	if ($this->logindb->query($update))
+	{
+		// Success
+		return array("status" => "success", "message" => "Logged out");
+	}
+	// Error
+	return array("status" => "error", "message" => "Logout failed");
+}
+
+// Session Validation Function
+// Only need session token
+public function validateSession($session_id)
+{
+	// Sanitize session token for security
+	$sid = $this->logindb->real_escape_string($session_id);
+
+	// Check if empty 
+	if (empty($sid)) 
+	{
+		return array("status" => "error", "message" => "Session invalid");
+	}
+
+	// Query database to check if any user currently holds session token
+	$statement = "SELECT * FROM users WHERE session_id = '$sid'";
+	$response = $this->logindb->query($statement);
+
+	// Check if num of matching rows > 0
+	if ($response->nuym_rows > 0)
+	{
+		// Success
+		return array("status" => "success", "message" => "Session valid");
+	}
+
+	// If none found, token is fake/expired due to logout/timeout
+	return array("status" => "error", "message" => "Session expired/invalid");
+}	
+
 }
 ?>
