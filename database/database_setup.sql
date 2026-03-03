@@ -17,5 +17,4 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE USER IF NOT EXISTS 'backendVM'@'localhost' IDENTIFIED BY 'password';
 -- Grant that user all privileges on it490_db, as root will not be used for security
 GRANT ALL PRIVILEGES ON it490_db.* TO 'backendVM'@'localhost';
-FLUSH PRIVILEGES
-EXIT;
+FLUSH PRIVILEGES;
