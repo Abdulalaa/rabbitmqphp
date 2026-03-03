@@ -46,7 +46,7 @@ public function validateLogin($username,$password)
 			$session_key = bin2hex(random_bytes(16));
 
 			// Update session_id in user's row with this session key
-			$update = "UPDATE users SET session_id = '$session_key' WHER username = '$un'";
+			$update = "UPDATE users SET session_id = '$session_key' WHERE username = '$un'";
 			// Execute update query
 			$this->logindb->query($update);
 
@@ -68,7 +68,7 @@ public function registerUser($username, $password)
 	$un = $this->logindb->real_escape_string($username);
 
 	// Hash selected user password (we never store plaintext passwords)
-	$hashed_pw = password_hash($password, PASSWORD_DEFAULT) // PASSWORD_DEFAULT auto updates when stronger hashes in the future become standard
+	$hashed_pw = password_hash($password, PASSWORD_DEFAULT); // PASSWORD_DEFAULT auto updates when stronger hashes in the future become standard
 	
 	// Query to insert new user's username and password into database
 	$statement = "INSERT INTO users (username, password_hash) VALUES ('$un', '$hashed_pw')";
@@ -76,7 +76,7 @@ public function registerUser($username, $password)
 	// If username is unique (checked by database as un = unique), success
 	if ($this->logindb->query($statement))
 	{
-		return array("status" => "success", "message" => "Registration Success"); \
+		return array("status" => "success", "message" => "Registration Success");
 	}
 	
 	// If registration fails bc of unique constraint in db, error
@@ -121,7 +121,7 @@ public function validateSession($session_id)
 	$response = $this->logindb->query($statement);
 
 	// Check if num of matching rows > 0
-	if ($response->nuym_rows > 0)
+	if ($response->num_rows > 0)
 	{
 		// Success
 		return array("status" => "success", "message" => "Session valid");
