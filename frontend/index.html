@@ -115,6 +115,14 @@
             <button type="submit">Register</button>
         </form>
     </div>
-
+    
+    <div class="form-box">
+	<h3>Account Status</h3>
+	<form onsubmit="SendAuthRequest(event, 'log', 'logout')">
+            <input type="hidden" id="out_username" value="CURRENT_USER">
+	    <input type="hidden" id="out_password" value="none">
+	    <button type="submit" onclick="SendAuthRequest(event, 'out', 'logout')">Log Out</button>
+	</form>
+    </div>
 </body>
 </html>
