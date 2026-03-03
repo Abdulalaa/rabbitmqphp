@@ -118,7 +118,7 @@
     
     <div class="form-box">
 	<h3>Account Status</h3>
-	<form onsubmit="SendAuthRequest(event, 'log', 'logout')">
+	<form onsubmit="SendAuthRequest(event, 'out', 'logout')">
             <input type="hidden" id="out_username" value="CURRENT_USER">
 	    <input type="hidden" id="out_password" value="none">
 	    <button type="submit" onclick="SendAuthRequest(event, 'out', 'logout')">Log Out</button>
