@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AART490 - Authentication</title>
+    
+    <style>
+        /* Set font and spacing for entire page */
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        
+        /* Class to box registration/login forms */
+        .form-box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; width: 300px; }
+        
+        /* Set margin for h3 in form box class */
+        .form-box h3 { margin-top: 0; }
+        
+        /* Stretch input boxes to fill box width */
+        input { margin-bottom: 10px; width: 100%; padding: 5px; }
+        
+        /* Set font/color/bottom margin of server responses/update messages */
+        #textResponse { font-weight: bold; color: blue; margin-bottom: 20px; }
+    </style>
+
+    <script>
+        // Function to fetch responses from backend
+        // Displays updates and messages from login.php
+        function HandleResponse(response)
+	{
+            // document.getElementById() to grab textResponse ID
+            // .innerHTML to show server response
+            document.getElementById("textResponse").innerHTML = response;
+        }
+
+        // Function to make requests when user clicks register/login
+        // Three arguments: click event, prefix (reg/log) to identify form, type of action (login/register) 
+        function SendAuthRequest(event, formPrefix, type)
+	{
+            
+            // Prevent the default page refresh when user submits data
+	    // AJAX to dynamically refresh instead
+            event.preventDefault();
+
+            // document.getElementById().value to get user input strings
+            // formPrefix to identify action type
+            var username = document.getElementById(formPrefix + "_username").value;
+            var password = document.getElementById(formPrefix + "_password").value;
+
+            // Check if inputs are empty
+            if(username === "" || password === "")
+            {
+                document.getElementById("textResponse").innerHTML = "Please fill fields";
+                return;
+            }
+
+            document.getElementById("textResponse").innerHTML = "Sending request... please wait.";
+
+            // Create AJAX XMLHttpRequest object 
+	    // Allows for dynamic communication
+            var request = new XMLHttpRequest();
+            
+            // .open() for TCP conneciton, POST for securely sending data
+            request.open("POST", "login.php", true);
+            
+            // Tell PHP how data is formatted in form
+            request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            
+            // Function when status of request changes
+            request.onreadystatechange = function ()
+		{
+                // readyState == 4 for request finished
+                // status == 200 is HTTP for ok (404, 500, etc indicate error)
+		// Must check that request is finished and return 200 for ok
+                if ((this.readyState == 4) && (this.status == 200))
+		{
+                    // Pass request response to handle function to update textResponse
+                    HandleResponse(this.responseText);
+                }		
+            }
+            
+            // Build query string to send gathered data to login.php
+            var data = "type=" + type + "&username=" + encodeURIComponent(username) + "&password=" + encodeURIComponent(password);
+            
+            // Push query string to login.php, defined in function parameter
+            request.send(data);
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Welcome</h1>
+    
+    <div id="textResponse">Type Here</div>
+
+    <div class="form-box">
+        <h3>Login</h3>
+        <form onsubmit="SendAuthRequest(event, 'log', 'login')">
+            <label>Username:</label>
+            <input type="text" id="log_username" required>
+            
+            <label>Password:</label>
+            <input type="password" id="log_password" required>
+            
+            <button type="submit">Log In</button>
+        </form>
+    </div>
+
+    <div class="form-box">
+        <h3>Register New Account</h3>
+        <form onsubmit="SendAuthRequest(event, 'reg', 'register')">
+            <label>Choose Username:</label>
+            <input type="text" id="reg_username" required>
+            
+            <label>Choose Password:</label>
+            <input type="password" id="reg_password" required>
+            
+            <button type="submit">Register</button>
+        </form>
+    </div>
+    
+    <div class="form-box">
+	<h3>Account Status</h3>
+	<form onsubmit="SendAuthRequest(event, 'out', 'logout')">
+            <input type="hidden" id="out_username" value="CURRENT_USER">
+	    <input type="hidden" id="out_password" value="none">
+	    <button type="submit">Log Out</button>
+	</form>
+    </div>
+</body>
+</html>
