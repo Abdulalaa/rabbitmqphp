@@ -16,6 +16,6 @@ CREATE TABLE IF NOT EXISTS users (
 -- Create localhost user that is the sole access to the db for PHP script
 CREATE USER IF NOT EXISTS 'backendVM'@'localhost' IDENTIFIED BY 'password';
 -- Grant that user all privileges on it490_db, as root will not be used for security
-GRANT ALL PRIVELAGES ON it490_db.* TO 'backendVM'@'localhost';
+GRANT ALL PRIVILEGES ON it490_db.* TO 'backendVM'@'localhost';
 FLUSH PRIVILEGES
 EXIT;
