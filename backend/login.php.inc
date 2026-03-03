@@ -10,7 +10,7 @@ private $logindb;
 public function __construct()
 {
 	// TCP connection to MySQL server, local access on database VM only
-	$this->logindb = new mysqli("127.0.0.1","backendVM","AART490","it490_db");
+	$this->logindb = new mysqli("127.0.0.1","backendVM","password","it490_db");
 
 	// Check if failed connection or credentials
 	if ($this->logindb->connect_errno != 0)
@@ -51,7 +51,7 @@ public function validateLogin($username,$password)
 			$this->logindb->query($update);
 
 			// Send success message and new generated token to frontend as array package
-			return array("status" => "success", "session_id" => $session_key);
+			return array("status" => "success", "session_id" => $session_key, "message" => "Login Successful");
 		}
 
 		// Error message for incorrect password
