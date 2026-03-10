@@ -1,128 +1,223 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AART490 - Authentication</title>
+    <title>AART490 - Authentication & Movie Platform</title>
     
     <style>
-        /* Set font and spacing for entire page */
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        
-        /* Class to box registration/login forms */
-        .form-box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; width: 300px; }
-        
-        /* Set margin for h3 in form box class */
+        /* --- Existing Authentication CSS --- */
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4; color: #333; margin: 0; }
+        .form-box { border: 1px solid #ccc; padding: 15px; margin-bottom: 20px; width: 300px; background: white; border-radius: 5px; }
         .form-box h3 { margin-top: 0; }
-        
-        /* Stretch input boxes to fill box width */
-        input { margin-bottom: 10px; width: 100%; padding: 5px; }
-        
-        /* Set font/color/bottom margin of server responses/update messages */
+        input { margin-bottom: 10px; width: calc(100% - 12px); padding: 5px; }
         #textResponse { font-weight: bold; color: blue; margin-bottom: 20px; }
+
+        /* --- New Movie Platform CSS --- */
+        #movieSection { display: none; } /* Hidden by default until login */
+        nav { padding: 15px; background: #222; display: flex; gap: 10px; border-radius: 5px; margin-bottom: 20px; }
+        nav input { margin-bottom: 0; width: 300px; }
+        nav button { padding: 8px 15px; cursor: pointer; background: #e50914; color: white; border: none; border-radius: 5px; }
+        .movie-grid { display: flex; flex-wrap: wrap; gap: 20px; }
+        .movie-card { background: white; width: 200px; padding: 10px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .movie-card img { width: 100%; border-radius: 5px; }
+        .controls { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+        .controls button { padding: 5px; cursor: pointer; background: #333; color: white; border: none; border-radius: 3px; }
+        .controls button:hover { background: #555; }
     </style>
 
     <script>
-        // Function to fetch responses from backend
-        // Displays updates and messages from login.php
-        function HandleResponse(response)
-	{
-            // document.getElementById() to grab textResponse ID
-            // .innerHTML to show server response
+        // --- 1. Authentication Logic (Your Existing Code, Expanded) ---
+        
+        let currentUser = null; // Track the logged-in user
+
+        function HandleResponse(response, type, username) {
             document.getElementById("textResponse").innerHTML = response;
+            
+            // Mock logic to transition to the movie platform upon successful login
+            // In reality, login.php should return a JSON response like {"status": "success"}
+            if (type === 'login' && response.toLowerCase().includes("success")) {
+                currentUser = username;
+                document.getElementById("authSection").style.display = "none";
+                document.getElementById("movieSection").style.display = "block";
+                document.getElementById("userGreeting").innerText = "Welcome to your Library, " + currentUser;
+                
+                // Initialize the platform by loading recommendations
+                loadRecommendations(); 
+            } else if (type === 'logout') {
+                currentUser = null;
+                document.getElementById("authSection").style.display = "block";
+                document.getElementById("movieSection").style.display = "none";
+                document.getElementById("textResponse").innerHTML = "Logged out successfully.";
+            }
         }
 
-        // Function to make requests when user clicks register/login
-        // Three arguments: click event, prefix (reg/log) to identify form, type of action (login/register) 
-        function SendAuthRequest(event, formPrefix, type)
-	{
-            
-            // Prevent the default page refresh when user submits data
-	    // AJAX to dynamically refresh instead
+        function SendAuthRequest(event, formPrefix, type) {
             event.preventDefault();
 
-            // document.getElementById().value to get user input strings
-            // formPrefix to identify action type
             var username = document.getElementById(formPrefix + "_username").value;
             var password = document.getElementById(formPrefix + "_password").value;
 
-            // Check if inputs are empty
-            if(username === "" || password === "")
-            {
+            if(type !== 'logout' && (username === "" || password === "")) {
                 document.getElementById("textResponse").innerHTML = "Please fill fields";
                 return;
             }
 
             document.getElementById("textResponse").innerHTML = "Sending request... please wait.";
 
-            // Create AJAX XMLHttpRequest object 
-	    // Allows for dynamic communication
             var request = new XMLHttpRequest();
-            
-            // .open() for TCP conneciton, POST for securely sending data
             request.open("POST", "login.php", true);
-            
-            // Tell PHP how data is formatted in form
             request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             
-            // Function when status of request changes
-            request.onreadystatechange = function ()
-		{
-                // readyState == 4 for request finished
-                // status == 200 is HTTP for ok (404, 500, etc indicate error)
-		// Must check that request is finished and return 200 for ok
-                if ((this.readyState == 4) && (this.status == 200))
-		{
-                    // Pass request response to handle function to update textResponse
-                    HandleResponse(this.responseText);
+            request.onreadystatechange = function () {
+                if ((this.readyState == 4) && (this.status == 200)) {
+                    // Pass the type and username so HandleResponse knows what to do
+                    HandleResponse(this.responseText, type, username);
                 }		
             }
             
-            // Build query string to send gathered data to login.php
             var data = "type=" + type + "&username=" + encodeURIComponent(username) + "&password=" + encodeURIComponent(password);
-            
-            // Push query string to login.php, defined in function parameter
             request.send(data);
+        }
+
+        // --- 2. Movie Platform & RabbitMQ Logic ---
+
+        const TMDB_API_KEY = 'YOUR_TMDB_API_KEY_HERE';
+        const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+        const PHP_RABBITMQ_URL = 'publish_task.php'; 
+
+        async function performSearch() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) return;
+
+            document.getElementById('movieContainer').innerHTML = "<p>Searching...</p>";
+            const response = await fetch(`${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${query}`);
+            const data = await response.json();
+            renderMovies(data.results, "Search Results");
+        }
+
+        async function loadRecommendations() {
+            // Using a hardcoded movie ID (e.g., 550 for Fight Club) as a placeholder for a user's favorite film
+            const movieId = 550; 
+            const response = await fetch(`${TMDB_BASE_URL}/movie/${movieId}/recommendations?api_key=${TMDB_API_KEY}`);
+            const data = await response.json();
+            renderMovies(data.results, "Recommended for You");
+        }
+
+        async function sendTaskToQueue(action, movieData) {
+            const payload = {
+                action: action,
+                username: currentUser,
+                movie_id: movieData.id,
+                title: movieData.title,
+                status: movieData.status || null,
+                rating: movieData.rating || null,
+                review: movieData.review || null
+            };
+
+            // Send to your RabbitMQ PHP Publisher
+            await fetch(PHP_RABBITMQ_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            document.getElementById("textResponse").innerHTML = `Action '${action}' saved for ${movieData.title}!`;
+        }
+
+        function addToLibrary(id, title, status) {
+            sendTaskToQueue('update_library', { id, title, status });
+        }
+
+        function rateMovie(id, title) {
+            const rating = prompt("Rate this movie from 1 to 5:");
+            const review = prompt("Leave a brief review (optional):");
+            
+            if (rating >= 1 && rating <= 5) {
+                sendTaskToQueue('submit_review', { id, title, rating, review });
+            } else {
+                alert("Invalid rating. Must be between 1 and 5.");
+            }
+        }
+
+        function renderMovies(movies, sectionTitle) {
+            const container = document.getElementById('movieContainer');
+            container.innerHTML = `<h3>${sectionTitle}</h3><div class="movie-grid" id="grid"></div>`;
+            const grid = document.getElementById('grid');
+            
+            movies.forEach(movie => {
+                if (!movie.poster_path) return; 
+                
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                // Escape quotes in titles to prevent HTML breakage
+                const safeTitle = movie.title.replace(/'/g, "\\'");
+                
+                card.innerHTML = `
+                    <img src="https://image.tmdb.org/t/p/w200${movie.poster_path}" alt="${movie.title}">
+                    <h4>${movie.title}</h4>
+                    <p>⭐ ${movie.vote_average.toFixed(1)} | ${movie.release_date}</p>
+                    <div class="controls">
+                        <button onclick="addToLibrary(${movie.id}, '${safeTitle}', 'seen')">Mark as Seen</button>
+                        <button onclick="addToLibrary(${movie.id}, '${safeTitle}', 'owned')">I Own This</button>
+                        <button onclick="addToLibrary(${movie.id}, '${safeTitle}', 'watchlist')">Watchlist</button>
+                        <button onclick="rateMovie(${movie.id}, '${safeTitle}')">Rate & Review</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
         }
     </script>
 </head>
 
 <body>
-    <h1>Welcome</h1>
-    
-    <div id="textResponse">Type Here</div>
+    <h1>System Portal</h1>
+    <div id="textResponse">Please log in to continue.</div>
 
-    <div class="form-box">
-        <h3>Login</h3>
-        <form onsubmit="SendAuthRequest(event, 'log', 'login')">
-            <label>Username:</label>
-            <input type="text" id="log_username" required>
-            
-            <label>Password:</label>
-            <input type="password" id="log_password" required>
-            
-            <button type="submit">Log In</button>
-        </form>
+    <div id="authSection">
+        <div class="form-box">
+            <h3>Login</h3>
+            <form onsubmit="SendAuthRequest(event, 'log', 'login')">
+                <label>Username:</label>
+                <input type="text" id="log_username" required>
+                
+                <label>Password:</label>
+                <input type="password" id="log_password" required>
+                
+                <button type="submit">Log In</button>
+            </form>
+        </div>
+
+        <div class="form-box">
+            <h3>Register New Account</h3>
+            <form onsubmit="SendAuthRequest(event, 'reg', 'register')">
+                <label>Choose Username:</label>
+                <input type="text" id="reg_username" required>
+                
+                <label>Choose Password:</label>
+                <input type="password" id="reg_password" required>
+                
+                <button type="submit">Register</button>
+            </form>
+        </div>
     </div>
 
-    <div class="form-box">
-        <h3>Register New Account</h3>
-        <form onsubmit="SendAuthRequest(event, 'reg', 'register')">
-            <label>Choose Username:</label>
-            <input type="text" id="reg_username" required>
+    <div id="movieSection">
+        <h2 id="userGreeting"></h2>
+        
+        <nav>
+            <input type="text" id="searchInput" placeholder="Search movies...">
+            <button onclick="performSearch()">Search</button>
+            <button onclick="loadRecommendations()">Recommended</button>
             
-            <label>Choose Password:</label>
-            <input type="password" id="reg_password" required>
-            
-            <button type="submit">Register</button>
-        </form>
+            <form onsubmit="SendAuthRequest(event, 'out', 'logout')" style="margin: 0; margin-left: auto;">
+                <input type="hidden" id="out_username" value="CURRENT_USER">
+                <input type="hidden" id="out_password" value="none">
+                <button type="submit" style="background: #555;">Log Out</button>
+            </form>
+        </nav>
+
+        <div id="movieContainer">
+            </div>
     </div>
-    
-    <div class="form-box">
-	<h3>Account Status</h3>
-	<form onsubmit="SendAuthRequest(event, 'out', 'logout')">
-            <input type="hidden" id="out_username" value="CURRENT_USER">
-	    <input type="hidden" id="out_password" value="none">
-	    <button type="submit">Log Out</button>
-	</form>
-    </div>
+
 </body>
 </html>
