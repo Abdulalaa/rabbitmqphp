@@ -18,7 +18,7 @@ if (!isset($_POST) || empty($_POST))
 }
 
 // Get variables sent from index.html AJAX query string
-$type = $_POST["type"]; // Either login or register
+$type = $_POST["type"]; 
 $username = $_POST["username"];
 $password = $_POST["password"];
 
