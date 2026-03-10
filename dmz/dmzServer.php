@@ -125,7 +125,7 @@ function requestProcessor($request)
 }
 
 // Listener, rabbitMQ.ini for vpn IP and port conf
-$server = new rabbitMQServer(__DIR__."/../rabbitMQ.ini","Server");
+$server = new rabbitMQServer(__DIR__."/../rabbitMQ.ini","DMZ");
 
 // Infinite listening loop
 // Message received, processed in requestProcessor, return array arrives, sends back over to queue 
