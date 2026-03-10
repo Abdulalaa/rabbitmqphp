@@ -45,8 +45,28 @@ function doValidate($session_id)
 	return $login->validateSession($session_id);
 }
 
-// Switch Statement function for mapping request to correct loginDB function in login.php.inc
-// $request is a PHP array
+
+// Wrapper function for asking DMZ server for movie data
+function askDMZ($request)
+{
+	// Create client connection for DMZ queue
+	$dmzClient = new rabbitMQClient(__DIR__."/../rabbitMQ.ini","DMZ");
+
+	// Terminal verification message
+	echo "Asking DMZ server".PHP_EOL;
+	var_dump($request);
+
+	// Send request to DMZ queue and wait for response
+	$response = $dmzClient->send_request($request);
+
+	echo "Backend received response from DMZ".PHP_EOL;
+	return $response;
+}
+
+
+
+// Switch Statement function for routing requests to appropriate functions
+// $request is php array sent from frontend
 function requestProcessor($request)
 {
 	// echo received request and show request message in terminal
@@ -62,14 +82,28 @@ function requestProcessor($request)
 	// Switch statement for routing
   	switch ($request['type'])
   	{
-    		case "login":
-      		  	return doLogin($request['username'], $request['password']);
+		// Database login/registration/session logic
+    	case "login":
+      		return doLogin($request['username'], $request['password']);
 		case "register":
 		  	return doRegister($request['username'], $request['password']);
 		case "validate_session":
 			return doValidate($request['sessionId']);
 		case "logout":
 			return doLogout($request['username']);
+
+		// API/DMZ movie data logic
+		case "search_movies":
+		case "get_movie_details":
+		case "get_upcoming_movies":
+			// Still need to add caching logic later but directly pass to DMZ for now
+			return askDMZ($request);
+
+
+		// Database movie table logic
+		case "add_to_library":
+		case "add_to_watchlist":
+		case "add_review":
 	}
 	// Success message
   	return array("returnCode" => '0', 'message'=>"Server received request and processed");
