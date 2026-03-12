@@ -6,7 +6,7 @@ require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');
 
 // Securely load the API key from the ignored .ini file
-$config = parse_ini_file(__DIR__.'/api_config.ini');
+$config = parse_ini_file(__DIR__.'/api_config.ini', true);
 $apiKey = $config['TMDB']['api_key'];
 
 // Fetch new movies from TMDB

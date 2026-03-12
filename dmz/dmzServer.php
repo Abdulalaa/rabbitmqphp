@@ -7,7 +7,7 @@ require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');
 
 // Read the secure config file
-$config = parse_ini_file(__DIR__.'/api_config.ini');
+$config = parse_ini_file(__DIR__.'/api_config.ini', true);
 
 // Function to fetch movie data from The Movie Database API
 // $searchQuery is string the user types in search box
