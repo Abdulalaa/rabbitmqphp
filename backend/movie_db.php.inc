@@ -36,12 +36,12 @@ class MovieDB
     // Function to cache movies 
     public function cacheMovie($movieData)
     {
-        // Extract and sanitize movie
-        $id = $this->db->real_escape_string($movieData['id']);
-        $title = $this->db->real_escape_string($movieData['title']);
-        $release = $this->db->real_escape_string($movieData['release_date']);
-        $poster = $this->db->real_escape_string($movieData['poster_path']);
-        $overview = $this->db->real_escape_string($movieData['overview']);
+        // Extract and sanitize movie (TMDB may omit optional fields)
+        $id = $this->db->real_escape_string($movieData['id'] ?? '');
+        $title = $this->db->real_escape_string($movieData['title'] ?? '');
+        $release = $this->db->real_escape_string($movieData['release_date'] ?? '');
+        $poster = $this->db->real_escape_string($movieData['poster_path'] ?? '');
+        $overview = $this->db->real_escape_string($movieData['overview'] ?? '');
 
         // Insert OR Update if it alr exists using ON DUPLICATE KEY UPDATE
         $query = "INSERT INTO movies (movie_id, title, release_date, poster_path, overview) 
@@ -84,7 +84,9 @@ class MovieDB
     {
         // Get User ID
         $user_query = "SELECT id FROM users WHERE username = '" . $this->db->real_escape_string($username) . "'";
-        $user_row = $this->db->query($user_query)->fetch_assoc();
+        $user_result = $this->db->query($user_query);
+        if ($user_result->num_rows == 0) return array("status" => "error", "message" => "User not found");
+        $user_row = $user_result->fetch_assoc();
         $user_id = $user_row['id'];
 
         // Convert boolean to tinyint for SQL (1 or 0)

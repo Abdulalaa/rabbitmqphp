@@ -6,18 +6,17 @@
 
     @return parsed ini machine information
 */
-function getHostInfo(array $extra = NULL)
+function getHostInfo(?array $extra = NULL)
 {
-    $machine;
-    $machine = parse_ini_file("host.ini",$process_sections=true);
-    if ($extra != NULL)
-    {
-        foreach ($extra as $ini)
-        {
-            $parsed = parse_ini_file($ini,true);
-            if ($parsed)
-            {
-                $machine = array_merge($machine,$parsed);
+    $machine = @parse_ini_file("host.ini", $process_sections = true);
+    if ($machine === false) {
+        $machine = array();
+    }
+    if ($extra != NULL) {
+        foreach ($extra as $ini) {
+            $parsed = parse_ini_file($ini, true);
+            if ($parsed) {
+                $machine = array_merge($machine, $parsed);
             }
         }
     }

@@ -1,8 +1,25 @@
 <?php
-// Shows movie details and action buttons from /processors
-require_once(__DIR__.'/path.inc');
-require_once(__DIR__.'/get_host_info.inc');
-require_once(__DIR__.'/rabbitMQLib.inc');
+// Shows movie details and action buttons; require valid session for current user
+require_once(__DIR__.'/../path.inc');
+require_once(__DIR__.'/../get_host_info.inc');
+require_once(__DIR__.'/../rabbitMQLib.inc');
+
+$session_id = $_COOKIE['session_id'] ?? '';
+if (empty($session_id)) {
+    header('Location: index.html');
+    exit;
+}
+
+$client = new rabbitMQClient(__DIR__."/../rabbitMQ.ini", "Server");
+$user_response = $client->send_request(array("type" => "get_username", "session_id" => $session_id));
+
+if (empty($user_response['username']) || ($user_response['status'] ?? '') !== 'success') {
+    setcookie("session_id", "", time() - 3600, "/");
+    header('Location: index.html');
+    exit;
+}
+
+$current_username = $user_response['username'];
 
 // Get movie ID from URL
 if (!isset($_GET['id'])) {
@@ -11,17 +28,14 @@ if (!isset($_GET['id'])) {
 $movieId = $_GET['id'];
 
 // Get movie details from backend
-$client = new rabbitMQClient(__DIR__."/rabbitMQ.ini", "Server");
 $request = array(
     "type" => "get_movie_details",
     "movie_id" => $movieId
 );
-
-// Will either come from DB or DMZ
 $movie = $client->send_request($request);
 
 // Check if movie not found
-if (empty($movie) || isset($movie['status']) && $movie['status'] == 'error') {
+if (empty($movie) || (isset($movie['status']) && $movie['status'] == 'error')) {
     die("Movie not found.");
 }
 ?>
@@ -39,6 +53,8 @@ if (empty($movie) || isset($movie['status']) && $movie['status'] == 'error') {
     </style>
 </head>
 <body>
+
+    <p><a href="dashboard.php">&larr; Back to Dashboard</a></p>
 
     <div class="movie-header">
         <?php if (!empty($movie['poster_path'])): ?>
@@ -65,41 +81,6 @@ if (empty($movie) || isset($movie['status']) && $movie['status'] == 'error') {
         <div id="actionStatus"></div>
     </div>
 
-    <script>
-    // Remember to get username from session, update later
-    const username = "CURRENT_USER"; 
-
-    function addToWatchlist(movieId) {
-        var request = new XMLHttpRequest();
-        request.open("POST", "library_action.php", true);
-        request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-        request.onreadystatechange = function () {
-            if ((this.readyState == 4) && (this.status == 200)) {
-                var response = JSON.parse(this.responseText);
-                document.getElementById("actionStatus").innerHTML = response.message;
-            }
-        };
-        request.send("action=add_to_watchlist&username=" + username + "&movie_id=" + movieId);
-    }
-
-    function addToLibrary(movieId) {
-        var seen = document.getElementById("hasSeen").checked;
-        var owned = document.getElementById("isOwned").checked;
-        
-        var request = new XMLHttpRequest();
-        request.open("POST", "library_action.php", true);
-        request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-
-        request.onreadystatechange = function () {
-            if ((this.readyState == 4) && (this.status == 200)) {
-                var response = JSON.parse(this.responseText);
-                document.getElementById("actionStatus").innerHTML = response.message;
-            }
-        };
-        request.send("action=add_to_library&username=" + username + "&movie_id=" + movieId + "&has_seen=" + seen + "&is_owned=" + owned);
-    }
-
     <div class="action-box">
         <h3>Leave a Review</h3>
         <label for="rating">Rating:</label>
@@ -120,12 +101,46 @@ if (empty($movie) || isset($movie['status']) && $movie['status'] == 'error') {
         <div id="reviewStatus" style="color: blue; font-weight: bold; margin-top: 10px;"></div>
     </div>
 
+    <script>
+    const username = <?php echo json_encode($current_username); ?>;
+
+    function addToWatchlist(movieId) {
+        var request = new XMLHttpRequest();
+        request.open("POST", "processors/library_action.php", true);
+        request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        request.onreadystatechange = function () {
+            if ((this.readyState == 4) && (this.status == 200)) {
+                var response = JSON.parse(this.responseText);
+                document.getElementById("actionStatus").innerHTML = response.message;
+            }
+        };
+        request.send("action=add_to_watchlist&username=" + username + "&movie_id=" + movieId);
+    }
+
+    function addToLibrary(movieId) {
+        var seen = document.getElementById("hasSeen").checked;
+        var owned = document.getElementById("isOwned").checked;
+        
+        var request = new XMLHttpRequest();
+        request.open("POST", "processors/library_action.php", true);
+        request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        request.onreadystatechange = function () {
+            if ((this.readyState == 4) && (this.status == 200)) {
+                var response = JSON.parse(this.responseText);
+                document.getElementById("actionStatus").innerHTML = response.message;
+            }
+        };
+        request.send("action=add_to_library&username=" + username + "&movie_id=" + movieId + "&has_seen=" + seen + "&is_owned=" + owned);
+    }
+
     function submitReview(movieId) {
         var rating = document.getElementById("rating").value;
         var text = document.getElementById("reviewText").value;
         
         var request = new XMLHttpRequest();
-        request.open("POST", "library_action.php", true);
+        request.open("POST", "processors/library_action.php", true);
         request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
         request.onreadystatechange = function () {
@@ -134,8 +149,6 @@ if (empty($movie) || isset($movie['status']) && $movie['status'] == 'error') {
                 document.getElementById("reviewStatus").innerHTML = response.message;
             }
         };
-        
-        // Update "current user" to actual user when backend logic is done for sessions - Ryann
         request.send("action=add_review&username=" + username + "&movie_id=" + movieId + "&rating=" + rating + "&review_text=" + encodeURIComponent(text));
     }
     </script>

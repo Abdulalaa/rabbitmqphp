@@ -4,9 +4,9 @@
 // This file is similar to search.php and login.php but for library actions
 // Need same libraries required as other processor files we wrote
 // I need to double check that the directory path is right since we moved processors into subfolder
-require_once(__DIR__.'/path.inc');
-require_once(__DIR__.'/get_host_info.inc');
-require_once(__DIR__.'/rabbitMQLib.inc');
+require_once(__DIR__.'/../../path.inc');
+require_once(__DIR__.'/../../get_host_info.inc');
+require_once(__DIR__.'/../../rabbitMQLib.inc');
 
 // Prevent direct access to this file from the browser
 if (!isset($_POST) || empty($_POST)) {
@@ -15,7 +15,7 @@ if (!isset($_POST) || empty($_POST)) {
 }
 
 // Connect to the RabbitMQ
-$client = new rabbitMQClient(__DIR__."/rabbitMQ.ini", "Server");
+$client = new rabbitMQClient(__DIR__."/../../rabbitMQ.ini", "Server");
 
 // Package the request array
 $request = array();

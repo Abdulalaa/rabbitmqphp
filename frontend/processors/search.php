@@ -2,9 +2,9 @@
 // middleman between browser and RabbitMQ for movie searches
 // fetches POST data from webpage, sends to RabbitMQ queue, and returns response to browser
 // Import core libraries in parent dir for rabbitMQ interaction
-require_once(__DIR__.'/../path.inc');
-require_once(__DIR__.'/../get_host_info.inc');
-require_once(__DIR__.'/../rabbitMQLib.inc');
+require_once(__DIR__.'/../../path.inc');
+require_once(__DIR__.'/../../get_host_info.inc');
+require_once(__DIR__.'/../../rabbitMQLib.inc');
 
 // Prevent direct access to this file from the browser
 if (!isset($_POST) || empty($_POST)) {
@@ -16,7 +16,7 @@ if (!isset($_POST) || empty($_POST)) {
 $searchQuery = $_POST["search_query"];
 
 // Connect to the RabbitMQ server
-$client = new rabbitMQClient(__DIR__."/../rabbitMQ.ini", "Server");
+$client = new rabbitMQClient(__DIR__."/../../rabbitMQ.ini", "Server");
 
 // Prepare request array w/ type and query
 $request = array();

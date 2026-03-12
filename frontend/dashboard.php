@@ -1,13 +1,25 @@
 <?php
-// Login landing page that professor required of us during authentication
-require_once(__DIR__.'/path.inc');
-require_once(__DIR__.'/get_host_info.inc');
-require_once(__DIR__.'/rabbitMQLib.inc');
+// Dashboard: require valid session, resolve username from session token
+require_once(__DIR__.'/../path.inc');
+require_once(__DIR__.'/../get_host_info.inc');
+require_once(__DIR__.'/../rabbitMQLib.inc');
 
-// Update by verifying session
-$current_username = "CURRENT_USER"; 
+$session_id = $_COOKIE['session_id'] ?? '';
+if (empty($session_id)) {
+    header('Location: index.html');
+    exit;
+}
 
-$client = new rabbitMQClient(__DIR__."/rabbitMQ.ini", "Server");
+$client = new rabbitMQClient(__DIR__."/../rabbitMQ.ini", "Server");
+$user_response = $client->send_request(array("type" => "get_username", "session_id" => $session_id));
+
+if (empty($user_response['username']) || ($user_response['status'] ?? '') !== 'success') {
+    setcookie("session_id", "", time() - 3600, "/");
+    header('Location: index.html');
+    exit;
+}
+
+$current_username = $user_response['username'];
 
 // Fetch upcoming movies from DMZ
 $upcoming_request = array("type" => "get_upcoming_movies");
@@ -38,11 +50,11 @@ $alerts = $client->send_request($alert_request);
 </head>
 <body>
 
-    <h1>Welcome back, <?php echo $current_username; ?>!</h1>
+    <h1>Welcome back, <?php echo htmlspecialchars($current_username, ENT_QUOTES, 'UTF-8'); ?>! <a href="processors/logout.php" style="font-size: 0.5em; font-weight: normal;">Log out</a></h1>
 
     <?php if (!empty($alerts)): ?>
         <div style="background-color: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
-            <h3 style="margin-top: 0; color: #856404;">🔔 New Alerts</h3>
+            <h3 style="margin-top: 0; color: #856404;">New Alerts</h3>
             <ul style="margin-bottom: 0; color: #856404;">
                 <?php foreach ($alerts as $alert): ?>
                     <li><strong><?php echo $alert['created_at']; ?>:</strong> <?php echo $alert['message']; ?></li>
@@ -94,18 +106,26 @@ $alerts = $client->send_request($alert_request);
         document.getElementById("searchResults").innerHTML = "Searching...";
 
         var request = new XMLHttpRequest();
-        request.open("POST", "search.php", true);
+        request.open("POST", "processors/search.php", true);
         request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
         request.onreadystatechange = function () {
             if ((this.readyState == 4) && (this.status == 200)) {
-                var movies = JSON.parse(this.responseText);
-                var output = "<ul>";
-                for (var i = 0; i < movies.length; i++) {
-                    output += "<li><a href='movie.php?id=" + movies[i].id + "'>" + movies[i].title + " (" + movies[i].release_date + ")</a></li>";
+                try {
+                    var data = JSON.parse(this.responseText);
+                    if (!Array.isArray(data)) {
+                        document.getElementById("searchResults").innerHTML = data.message || "Search failed. Try again.";
+                        return;
+                    }
+                    var output = "<ul>";
+                    for (var i = 0; i < data.length; i++) {
+                        output += "<li><a href='movie.php?id=" + data[i].id + "'>" + data[i].title + " (" + (data[i].release_date || "") + ")</a></li>";
+                    }
+                    output += "</ul>";
+                    document.getElementById("searchResults").innerHTML = output;
+                } catch (e) {
+                    document.getElementById("searchResults").innerHTML = "Search failed. Try again.";
                 }
-                output += "</ul>";
-                document.getElementById("searchResults").innerHTML = output;
             }
         };
         request.send("search_query=" + encodeURIComponent(query));

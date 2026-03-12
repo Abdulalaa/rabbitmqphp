@@ -45,6 +45,19 @@ function doValidate($session_id)
 	return $login->validateSession($session_id);
 }
 
+// Wrapper to get username from session token (for frontend pages)
+function doGetUsername($session_id)
+{
+	$login = new loginDB();
+	return $login->getUsernameFromSession($session_id);
+}
+
+// Wrapper to logout by session token (no username needed)
+function doLogoutBySession($session_id)
+{
+	$login = new loginDB();
+	return $login->logoutBySession($session_id);
+}
 
 // Wrapper function for asking DMZ server for movie data
 function askDMZ($request)
@@ -110,8 +123,12 @@ function requestProcessor($request)
 		  	return doRegister($request['username'], $request['password']);
 		case "validate_session":
 			return doValidate($request['sessionId']);
+		case "get_username":
+			return doGetUsername($request['session_id']);
 		case "logout":
 			return doLogout($request['username']);
+		case "logout_by_session":
+			return doLogoutBySession($request['session_id']);
 
 		// Cache routes
 		case "get_movie_details":

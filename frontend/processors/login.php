@@ -48,15 +48,16 @@ if ($type == 'logout')
 	exit(0);
 }
 
-// Login
-// Save session id received after successful login
+// Login success: set cookie and tell frontend to redirect to dashboard
 if ($response['status'] == 'success' && $type == 'login')
 {
-	// Set and save session cookie
 	setcookie("session_id", $response['session_id'], time() + 86400, "/");
+	header('Content-Type: application/json');
+	echo json_encode(array("redirect" => "dashboard.php"));
+	exit(0);
 }
 
-// Everything else will be echoed as a message from request array (registration success, error, invalid login, etc)
+// Everything else: echo message (registration success, error, invalid login, etc)
 echo $response['message'];
 exit(0);
 ?>

@@ -25,8 +25,13 @@
         // Displays updates and messages from login.php
         function HandleResponse(response)
 	{
-            // document.getElementById() to grab textResponse ID
-            // .innerHTML to show server response
+            try {
+                var data = JSON.parse(response);
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                    return;
+                }
+            } catch (e) {}
             document.getElementById("textResponse").innerHTML = response;
         }
 
@@ -58,7 +63,7 @@
             var request = new XMLHttpRequest();
             
             // .open() for TCP conneciton, POST for securely sending data
-            request.open("POST", "login.php", true);
+            request.open("POST", "processors/login.php", true);
             
             // Tell PHP how data is formatted in form
             request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");

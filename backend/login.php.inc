@@ -129,7 +129,35 @@ public function validateSession($session_id)
 
 	// If none found, token is fake/expired due to logout/timeout
 	return array("status" => "error", "message" => "Session expired/invalid");
-}	
+}
+
+// Log out by session token (no username needed from frontend)
+public function logoutBySession($session_id)
+{
+	$sid = $this->logindb->real_escape_string($session_id);
+	if (empty($sid)) return array("status" => "error", "message" => "No session");
+	$update = "UPDATE users SET session_id = NULL WHERE session_id = '$sid'";
+	if ($this->logindb->query($update)) {
+		return array("status" => "success", "message" => "Logged out");
+	}
+	return array("status" => "error", "message" => "Logout failed");
+}
+
+// Get username from session token (for dashboard/movie pages)
+public function getUsernameFromSession($session_id)
+{
+	$sid = $this->logindb->real_escape_string($session_id);
+	if (empty($sid)) {
+		return array("status" => "error", "message" => "Session invalid");
+	}
+	$statement = "SELECT username FROM users WHERE session_id = '$sid'";
+	$response = $this->logindb->query($statement);
+	if ($response && $response->num_rows > 0) {
+		$row = $response->fetch_assoc();
+		return array("status" => "success", "username" => $row["username"]);
+	}
+	return array("status" => "error", "message" => "Session expired/invalid");
+}
 
 }
 ?>

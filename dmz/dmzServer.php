@@ -120,7 +120,7 @@ function requestProcessor($request)
         
         case "get_movie_details":
             // Call get movie details function and pass movie id to it
-            return getMovieDetails($request['movieId']);
+            return getMovieDetails($request['movie_id'] ?? $request['movieId'] ?? null);
 
         case "get_upcoming_movies":
             // Call get upcoming movies function with no parameters
