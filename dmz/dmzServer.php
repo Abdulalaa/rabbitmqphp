@@ -9,43 +9,46 @@ require_once(__DIR__.'/../rabbitMQLib.inc');
 // Read the secure config file
 $config = parse_ini_file(__DIR__.'/api_config.ini', true);
 
+// Shared curl helper with timeouts — replaces file_get_contents to prevent indefinite hanging
+// Returns raw JSON string on success, false on failure
+function tmdbRequest($url)
+{
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+    $response = curl_exec($ch);
+    $error    = curl_error($ch);
+    curl_close($ch);
+    if ($response === false)
+    {
+        echo "CURL error: {$error}".PHP_EOL;
+        return false;
+    }
+    return $response;
+}
+
 // Function to fetch movie data from The Movie Database API
 // $searchQuery is string the user types in search box
 function fetchMoviesFromAPI($searchQuery)
 {
     global $config;
     
-    // Store TMDB API key from secure config file
-    $apiKey = $config['TMDB']['api_key'];
-
-    // Sanitize search query + URL encode for safe HTTP
-    // Prevents url breaking or security issues
+    $apiKey    = $config['TMDB']['api_key'];
     $safeQuery = urlencode($searchQuery);
-
-    // URL variable for TMDB movie data endpoint
-    // V3 authentication instead of V4 for now
-    $url = "https://api.themoviedb.org/3/search/movie?api_key={$apiKey}&query={$safeQuery}";
+    $url       = "https://api.themoviedb.org/3/search/movie?api_key={$apiKey}&query={$safeQuery}";
     
-    // Terminal verification message
     echo "Fetching movies from API for query: {$searchQuery}".PHP_EOL;
 
-    // Send HTTP GET request to API using file_get_contents()
-    // @ for suppressing PHP warnings for temporary network hiccups since they sometimes happen but they're not a big deal
-    $jsonResponse = @file_get_contents($url);
+    $jsonResponse = tmdbRequest($url);
 
-    // If API is down or network drops return empty array to prevent crashes
     if ($jsonResponse === false)
     {
         echo "Error fetching movies from API".PHP_EOL;
         return [];
     }
 
-    // Convert returned JSON to php array
-    // true forces associative array so rabbitmq can easily parse it
     $phpArray = json_decode($jsonResponse, true);
-
-    // Return only results array of movies, ignore other unimportant data like page count and metadata
-    // ?? [] to return empty array if results are empty
     return $phpArray['results'] ?? [];
 }
 
@@ -56,20 +59,13 @@ function getMovieDetails($movieId)
     global $config;
     
     $apiKey = $config['TMDB']['api_key'];
-    
-    // URL variable for TMDB movie details endpoint
-    $url = "https://api.themoviedb.org/3/movie/{$movieId}?api_key={$apiKey}";
+    $url    = "https://api.themoviedb.org/3/movie/{$movieId}?api_key={$apiKey}";
 
-    // Terminal verification message
     echo "Fetching details for Movie ID {$movieId}".PHP_EOL;
 
-    // Send HTTP GET request to API using file_get_contents()
-    // @ for suppressing PHP warnings for temporary network hiccups since they sometimes happen but they're not a big deal
-    $jsonResponse = @file_get_contents($url);
-    
+    $jsonResponse = tmdbRequest($url);
     if ($jsonResponse === false) return [];
 
-    // Return the single movie's data array
     return json_decode($jsonResponse, true) ?? [];
 }
 
@@ -79,17 +75,11 @@ function getUpcomingMovies()
     global $config;
     
     $apiKey = $config['TMDB']['api_key']; 
-    
-    // URL variable for TMDB upcoming movies endpoint
-    $url = "https://api.themoviedb.org/3/movie/upcoming?api_key={$apiKey}&language=en-US&page=1";
+    $url    = "https://api.themoviedb.org/3/movie/upcoming?api_key={$apiKey}&language=en-US&page=1";
 
-    // Terminal verification message
     echo "Fetching list of upcoming movies".PHP_EOL;
 
-    // Send HTTP GET request to API using file_get_contents()
-    // @ for suppressing PHP warnings for temporary network hiccups since they sometimes happen but they're not a big deal
-    $jsonResponse = @file_get_contents($url);
-    
+    $jsonResponse = tmdbRequest($url);
     if ($jsonResponse === false) return [];
 
     $phpArray = json_decode($jsonResponse, true);
