@@ -6,8 +6,8 @@ require_once(__DIR__.'/../path.inc');
 require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');
 require_once('login.php.inc');
+require_once('movie_db.php.inc'); // Wrapper functions for database logic
 
-// All db logic done in login.php.inc library
 
 // Wrapper function for login (sends request to database listener for actual sql logic/connection)
 function doLogin($username,$password)
@@ -49,7 +49,7 @@ function doValidate($session_id)
 // Wrapper function for asking DMZ server for movie data
 function askDMZ($request)
 {
-	// Create client connection for DMZ queue
+	// client connection for DMZ queue
 	$dmzClient = new rabbitMQClient(__DIR__."/../rabbitMQ.ini","DMZ");
 
 	// Terminal verification message
@@ -63,7 +63,26 @@ function askDMZ($request)
 	return $response;
 }
 
-
+// Cache wrapper for movie deftails
+function getSmartMovieDetails($movieId) {
+    $db = new MovieDB();
+    
+    // Check cache first
+    $cachedMovie = $db->checkCache($movieId);
+    
+    if ($cachedMovie) {
+        echo "Backend: Served $movieId from Local Cache. Saved an API call!\n";
+        return $cachedMovie;
+    }
+    // Ask DMZ if not in cache
+    $request = array("type" => "get_movie_details", "movie_id" => $movieId);
+    $dmzMovieData = askDMZ($request);
+    // Save to cache if not alr in cache
+    if (!empty($dmzMovieData)) {
+        $db->cacheMovie($dmzMovieData);
+    }
+    return $dmzMovieData;
+}
 
 // Switch Statement function for routing requests to appropriate functions
 // $request is php array sent from frontend
@@ -79,6 +98,8 @@ function requestProcessor($request)
     		return "ERROR: unsupported message type";
 	}
 
+	$db = new MovieDB(); // Instantiate our new database class
+
 	// Switch statement for routing
   	switch ($request['type'])
   	{
@@ -92,18 +113,27 @@ function requestProcessor($request)
 		case "logout":
 			return doLogout($request['username']);
 
+		// Cache routes
+		case "get_movie_details":
+			// Check db before DMZ
+			return getSmartMovieDetails($request['movie_id']);
+
 		// API/DMZ movie data logic
 		case "search_movies":
-		case "get_movie_details":
 		case "get_upcoming_movies":
-			// Still need to add caching logic later but directly pass to DMZ for now
+			// Still need to add caching logic 
 			return askDMZ($request);
-
 
 		// Database movie table logic
 		case "add_to_library":
+			return $db->addToLibrary($request['username'], $request['movie_id'], $request['has_seen'], $request['is_owned']);
 		case "add_to_watchlist":
+			return $db->addToWatchlist($request['username'], $request['movie_id']);
+		// Updated add review logic after debugging movie_db php inc problems
 		case "add_review":
+			return $db->addReview($request['username'], $request['movie_id'], $request['rating'], $request['review_text']);
+		case "get_recommendations":
+			return $db->getRecommendations($request['username']);
 	}
 	// Success message
   	return array("returnCode" => '0', 'message'=>"Server received request and processed");
@@ -119,4 +149,3 @@ $server->process_requests('requestProcessor');
 echo "Backend Listener is now shut down".PHP_EOL;
 exit();
 ?>
-
