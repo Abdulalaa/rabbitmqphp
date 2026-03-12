@@ -42,12 +42,13 @@ CREATE TABLE IF NOT EXISTS user_reviews (
     id INT AUTO_INCREMENT PRIMARY KEY, -- unique id for each review
     user_id INT NOT NULL, -- links user to movie
     movie_id INT NOT NULL, -- links user to movie
-    rating INT CHECK (rating >= 1 AND rating <= 5), -- 1-5 star rating
+    rating INT, -- 1-5 star rating
     review_text TEXT, -- text review
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- tracks when review created
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, -- if user deleted, so are their reviews
     FOREIGN KEY (movie_id) REFERENCES movies(movie_id) ON DELETE CASCADE, -- if movie deleted, so are reviews
     UNIQUE(user_id, movie_id)           -- prevents adding the same review twice
+    CONSTRAINT chck_rating CHECK (rating >= 1 AND rating <= 5),
 );
 
 -- Alerts table for push notifications for new movies on watchlist
