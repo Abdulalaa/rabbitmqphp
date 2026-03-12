@@ -5,8 +5,11 @@ require_once(__DIR__.'/../path.inc');
 require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');
 
+// Securely load the API key from the ignored .ini file
+$config = parse_ini_file(__DIR__.'/api_config.ini');
+$apiKey = $config['TMDB']['api_key'];
+
 // Fetch new movies from TMDB
-$apiKey = "YOUR_API_KEY";
 $url = "https://api.themoviedb.org/3/movie/upcoming?api_key={$apiKey}&language=en-US&page=1";
 
 echo "CRON: Waking up to fetch daily new movies...\n";

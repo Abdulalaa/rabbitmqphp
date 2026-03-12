@@ -6,14 +6,17 @@ require_once(__DIR__.'/../path.inc');
 require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');
 
+// Read the secure config file
+$config = parse_ini_file(__DIR__.'/api_config.ini');
 
 // Function to fetch movie data from The Movie Database API
 // $searchQuery is string the user types in search box
 function fetchMoviesFromAPI($searchQuery)
 {
-    // Store TMDB API key
-    // Will need to store actual key in config file through .gitignore for security since repo is public
-    $apiKey = "API_KEY_HERE";
+    global $config;
+    
+    // Store TMDB API key from secure config file
+    $apiKey = $config['TMDB']['api_key'];
 
     // Sanitize search query + URL encode for safe HTTP
     // Prevents url breaking or security issues
@@ -50,7 +53,9 @@ function fetchMoviesFromAPI($searchQuery)
 // $movieId is the tmdb movie id
 function getMovieDetails($movieId)
 {
-    $apiKey = "API_KEY_HERE";
+    global $config;
+    
+    $apiKey = $config['TMDB']['api_key'];
     
     // URL variable for TMDB movie details endpoint
     $url = "https://api.themoviedb.org/3/movie/{$movieId}?api_key={$apiKey}";
@@ -71,7 +76,9 @@ function getMovieDetails($movieId)
 // Function to fetch brand new/upcoming movies (for view movies deliverable)
 function getUpcomingMovies()
 {
-    $apiKey = "API_KEY_HERE"; 
+    global $config;
+    
+    $apiKey = $config['TMDB']['api_key']; 
     
     // URL variable for TMDB upcoming movies endpoint
     $url = "https://api.themoviedb.org/3/movie/upcoming?api_key={$apiKey}&language=en-US&page=1";
