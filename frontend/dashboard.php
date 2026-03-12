@@ -16,6 +16,10 @@ $upcoming_movies = $client->send_request($upcoming_request);
 // Get user recommendations from local database
 $rec_request = array("type" => "get_recommendations", "username" => $current_username);
 $recommendations = $client->send_request($rec_request);
+
+// Fetch User Alerts from cron/db
+$alert_request = array("type" => "get_alerts", "username" => $current_username);
+$alerts = $client->send_request($alert_request);
 ?>
 
 <!DOCTYPE html>
@@ -35,6 +39,17 @@ $recommendations = $client->send_request($rec_request);
 <body>
 
     <h1>Welcome back, <?php echo $current_username; ?>!</h1>
+
+    <?php if (!empty($alerts)): ?>
+        <div style="background-color: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #856404;">🔔 New Alerts</h3>
+            <ul style="margin-bottom: 0; color: #856404;">
+                <?php foreach ($alerts as $alert): ?>
+                    <li><strong><?php echo $alert['created_at']; ?>:</strong> <?php echo $alert['message']; ?></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    <?php endif; ?>
 
     <div class="search-box">
         <h3>Find a Movie</h3>

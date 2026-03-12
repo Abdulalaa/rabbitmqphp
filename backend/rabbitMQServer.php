@@ -134,6 +134,11 @@ function requestProcessor($request)
 			return $db->addReview($request['username'], $request['movie_id'], $request['rating'], $request['review_text']);
 		case "get_recommendations":
 			return $db->getRecommendations($request['username']);
+			// Cron script at 2 am to fetch new movies
+		case "process_daily_movies":
+			return $db->processDailyMovies($request['movies']);
+		case "get_alerts":
+			return $db->getUserAlerts($request['username']);
 	}
 	// Success message
   	return array("returnCode" => '0', 'message'=>"Server received request and processed");

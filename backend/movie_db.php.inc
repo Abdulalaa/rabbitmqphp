@@ -163,5 +163,55 @@ class MovieDB
 
         return $recommendations;
     }
+
+    // Generate push notifs daily
+    public function processDailyMovies($movies)
+    {
+        $alertsGenerated = 0;
+
+        foreach ($movies as $movie) {
+            // Cache movie into db
+            $this->cacheMovie($movie);
+            
+            $movie_id = $this->db->real_escape_string($movie['id']);
+            $title = $this->db->real_escape_string($movie['title']);
+
+            // For all users w/ movie in watchlist, send alert
+            $query = "SELECT user_id FROM user_watchlist WHERE movie_id = '$movie_id'";
+            $result = $this->db->query($query);
+
+            while ($row = $result->fetch_assoc()) {
+                $uid = $row['user_id'];
+                
+                // Alert logic
+                $msg = "ALERT: A movie on your watchlist ($title) has a new release update!";
+                $this->db->query("INSERT INTO user_alerts (user_id, message) VALUES ('$uid', '$msg')");
+                $alertsGenerated++;
+            }
+        }
+
+        return array("status" => "success", "message" => "Processed new movies and generated $alertsGenerated alerts!");
+    }
+
+        // Fetch new unread alerts to dashboard
+    public function getUserAlerts($username)
+    {
+        // Get the User ID using un
+        $user_query = "SELECT id FROM users WHERE username = '" . $this->db->real_escape_string($username) . "'";
+        $user_result = $this->db->query($user_query);
+        if ($user_result->num_rows == 0) return array();
+        $user_id = $user_result->fetch_assoc()['id'];
+
+        // Fetch their alerts starting w/ newest
+        $query = "SELECT message, created_at FROM user_alerts WHERE user_id = '$user_id' ORDER BY created_at DESC LIMIT 5";
+        $result = $this->db->query($query);
+        
+        $alerts = array();
+        while ($row = $result->fetch_assoc()) {
+            $alerts[] = $row;
+        }
+        return $alerts;
+    }
+
 }
 ?>
