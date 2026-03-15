@@ -122,7 +122,7 @@ function requestProcessor($request)
 		case "register":
 		  	return doRegister($request['username'], $request['password']);
 		case "validate_session":
-			return doValidate($request['sessionId']);
+			return doValidate($request['session_id']);
 		case "get_username":
 			return doGetUsername($request['session_id']);
 		case "logout":
@@ -135,10 +135,12 @@ function requestProcessor($request)
 			// Check db before DMZ
 			return getSmartMovieDetails($request['movie_id']);
 
+		// Upcoming movies stored by cron, just pull from db
+		case "get_upcoming_movies":
+			return $db->getUpcomingMovies();
+
 		// API/DMZ movie data logic
 		case "search_movies":
-		case "get_upcoming_movies":
-			// Still need to add caching logic 
 			return askDMZ($request);
 
 		// Database movie table logic

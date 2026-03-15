@@ -1,5 +1,5 @@
 <?php
-// Shows movie details and action buttons; require valid session for current user
+// Movie page, checks session then loads movie details and action buttons
 require_once(__DIR__.'/../path.inc');
 require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');

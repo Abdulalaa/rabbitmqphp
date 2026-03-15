@@ -9,8 +9,7 @@ require_once(__DIR__.'/../rabbitMQLib.inc');
 // Read the secure config file
 $config = parse_ini_file(__DIR__.'/api_config.ini', true);
 
-// Shared curl helper with timeouts — replaces file_get_contents to prevent indefinite hanging
-// Returns raw JSON string on success, false on failure
+// curl helper for all TMDB requests, has timeouts so it doesnt hang forever
 function tmdbRequest($url)
 {
     $ch = curl_init($url);
@@ -52,8 +51,7 @@ function fetchMoviesFromAPI($searchQuery)
     return $phpArray['results'] ?? [];
 }
 
-// Function to get details of a specific movie (for view movies deliverable)
-// $movieId is the tmdb movie id
+// Get details for a specific movie using its TMDB id
 function getMovieDetails($movieId)
 {
     global $config;
@@ -69,7 +67,7 @@ function getMovieDetails($movieId)
     return json_decode($jsonResponse, true) ?? [];
 }
 
-// Function to fetch brand new/upcoming movies (for view movies deliverable)
+// Fetch upcoming movies from TMDB (called by cron nightly)
 function getUpcomingMovies()
 {
     global $config;
@@ -105,19 +103,16 @@ function requestProcessor($request)
     switch ($request['type'])
     {
         case "search_movies":
-            // Call fetch movie function and pass search query
             return fetchMoviesFromAPI($request['query']);
         
         case "get_movie_details":
-            // Call get movie details function and pass movie id to it
             return getMovieDetails($request['movie_id'] ?? $request['movieId'] ?? null);
 
         case "get_upcoming_movies":
-            // Call get upcoming movies function with no parameters
             return getUpcomingMovies();
     }
 
-    // Return ignored message for type not found
+    // no matching type found
     return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }
 

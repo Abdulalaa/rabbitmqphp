@@ -4,9 +4,9 @@
 // Combining them simplfiied them into a single bridge that connected browser/form to RabbitMQ
 // Import RabbitMQ library/config files from parent directory
 // Similar to RabbitMQServer in backend
-require_once(__DIR__.'/../path.inc');
-require_once(__DIR__.'/../get_host_info.inc');
-require_once(__DIR__.'/../rabbitMQLib.inc');
+require_once(__DIR__.'/../../path.inc');
+require_once(__DIR__.'/../../get_host_info.inc');
+require_once(__DIR__.'/../../rabbitMQLib.inc');
 
 // Get data from webpage (index.html)
 // Kill script if any attempt to load this file directly into browser without filling in forms for security
@@ -23,7 +23,7 @@ $username = $_POST["username"];
 $password = $_POST["password"];
 
 // Initialize RabbitMQ client connection (using ini)
-$client = new rabbitMQClient(__DIR__."/../rabbitMQ.ini", "Server");
+$client = new rabbitMQClient(__DIR__."/../../rabbitMQ.ini", "Server");
 
 // Empty array to hold data
 $request = array();

@@ -229,7 +229,8 @@ class rabbitMQClient
 		}
 		catch(Exception $e)
 		{
-			die("failed to send message to exchange: ". $e->getMessage()."\n");
+			error_log("rabbitMQ send_request failed: " . $e->getMessage());
+			return array("status" => "error", "message" => "Connection failed");
 		}
 	}
 
@@ -264,7 +265,8 @@ class rabbitMQClient
 		}
 		catch(Exception $e)
 		{
-			die("failed to send message to exchange: ". $e->getMessage()."\n");
+			error_log("rabbitMQ publish failed: " . $e->getMessage());
+			return false;
 		}
 	}
 }

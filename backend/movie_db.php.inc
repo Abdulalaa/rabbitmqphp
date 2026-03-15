@@ -36,7 +36,7 @@ class MovieDB
     // Function to cache movies 
     public function cacheMovie($movieData)
     {
-        // Extract and sanitize movie (TMDB may omit optional fields)
+        // Extract fields and sanitize, some fields might be missing from TMDB response
         $id = $this->db->real_escape_string($movieData['id'] ?? '');
         $title = $this->db->real_escape_string($movieData['title'] ?? '');
         $release = $this->db->real_escape_string($movieData['release_date'] ?? '');
@@ -195,7 +195,27 @@ class MovieDB
         return array("status" => "success", "message" => "Processed new movies and generated $alertsGenerated alerts!");
     }
 
-        // Fetch new unread alerts to dashboard
+    // Get upcoming movies from db (cron on DMZ fills this table nightly)
+    public function getUpcomingMovies()
+    {
+        $query = "SELECT movie_id, title, release_date, poster_path, overview
+                  FROM movies
+                  WHERE release_date >= CURDATE()
+                  ORDER BY release_date ASC
+                  LIMIT 20";
+
+        $result = $this->db->query($query);
+        $movies = array();
+
+        if ($result) {
+            while ($row = $result->fetch_assoc()) {
+                $movies[] = $row;
+            }
+        }
+        return $movies;
+    }
+
+    // Fetch new unread alerts to dashboard
     public function getUserAlerts($username)
     {
         // Get the User ID using un

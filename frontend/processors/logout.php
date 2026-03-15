@@ -1,5 +1,5 @@
 <?php
-// Log out: invalidate session on backend and clear cookie, then redirect to login
+// Tell backend to clear session token, delete cookie, redirect to index
 require_once(__DIR__.'/../../path.inc');
 require_once(__DIR__.'/../../get_host_info.inc');
 require_once(__DIR__.'/../../rabbitMQLib.inc');

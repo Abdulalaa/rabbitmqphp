@@ -1,5 +1,5 @@
 <?php
-// Dashboard: require valid session, resolve username from session token
+// Dashboard page, checks session cookie and loads user data
 require_once(__DIR__.'/../path.inc');
 require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');
@@ -21,17 +21,23 @@ if (empty($user_response['username']) || ($user_response['status'] ?? '') !== 's
 
 $current_username = $user_response['username'];
 
-// Fetch upcoming movies from DMZ
-$upcoming_request = array("type" => "get_upcoming_movies");
-$upcoming_movies = $client->send_request($upcoming_request);
+// Get upcoming movies from db (cron on DMZ fills this nightly)
+$upcoming_movies = $client->send_request(array("type" => "get_upcoming_movies"));
+if (!is_array($upcoming_movies) || isset($upcoming_movies['status'])) {
+	$upcoming_movies = array();
+}
 
-// Get user recommendations from local database
-$rec_request = array("type" => "get_recommendations", "username" => $current_username);
-$recommendations = $client->send_request($rec_request);
+// Get recs for this user from db
+$recommendations = $client->send_request(array("type" => "get_recommendations", "username" => $current_username));
+if (!is_array($recommendations) || isset($recommendations['status'])) {
+	$recommendations = array();
+}
 
 // Fetch User Alerts from cron/db
-$alert_request = array("type" => "get_alerts", "username" => $current_username);
-$alerts = $client->send_request($alert_request);
+$alerts = $client->send_request(array("type" => "get_alerts", "username" => $current_username));
+if (!is_array($alerts) || isset($alerts['status'])) {
+	$alerts = array();
+}
 ?>
 
 <!DOCTYPE html>
