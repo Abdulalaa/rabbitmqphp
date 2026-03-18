@@ -100,7 +100,7 @@ if (!is_array($alerts) || isset($alerts['status'])) {
                 <div class="movie-card">
                     <img src="https://image.tmdb.org/t/p/w200<?php echo $movie['poster_path']; ?>" alt="Poster">
                     <h4><?php echo $movie['title']; ?></h4>
-                    <a href="movie.php?id=<?php echo $movie['id']; ?>">View Details</a>
+                    <a href="movie.php?id=<?php echo $movie['movie_id']; ?>">View Details</a>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>
