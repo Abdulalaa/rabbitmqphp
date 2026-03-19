@@ -40,10 +40,8 @@ class rabbitMQServer {
                 $exchange = new AMQPExchange($channel);
                 $exchange->setName($this->exchange);
                 
-                // FIX: Use the specific reply_to queue as the routing key (Direct Routing)
                 $exchange->publish(json_encode($response), $msg->getReplyTo(), AMQP_NOPARAM, array('correlation_id' => $msg->getCorrelationId()));
-                
-                $conn->disconnect(); // Clean up response connection
+                $conn->disconnect();
             }
         } catch(Exception $e) { echo "Server Error: " . $e->getMessage() . PHP_EOL; }
     }
@@ -69,6 +67,7 @@ class rabbitMQClient {
     private $response_queue = array();
     private $exchange;
     private $queue;
+    private $routing_key = '*';
 
     function __construct($machine, $server = "rabbitMQ") {
         $this->machine = getHostInfo(array($machine));
@@ -86,7 +85,7 @@ class rabbitMQClient {
         if (!isset($this->response_queue[$uid])) return true;
         $this->conn_queue->ack($response->getDeliveryTag());
         $this->response_queue[$uid] = json_decode($response->getBody(), true);
-        return false; // Stop consume loop
+        return false;
     }
 
     function send_request($message) {
@@ -103,18 +102,43 @@ class rabbitMQClient {
         $callback_queue->setName($this->queue . "_resp_" . $uid);
         $callback_queue->setFlags(AMQP_AUTODELETE);
         $callback_queue->declare();
-        
-
         $callback_queue->bind($exchange->getName(), $callback_queue->getName());
 
         $this->conn_queue = $callback_queue;
         $exchange->publish(json_encode($message), "*", AMQP_NOPARAM, array('reply_to' => $callback_queue->getName(), 'correlation_id' => $uid));
-        
+
         $callback_queue->consume(array($this, 'process_response'));
+        while ($this->response_queue[$uid] === "waiting") {
+            $channel->wait();
+        }
+
         $response = $this->response_queue[$uid];
         unset($this->response_queue[$uid]);
         $conn->disconnect();
         return $response;
+    }
+
+    function publish($message)
+    {
+        $json_message = json_encode($message);
+        try
+        {
+            $params = array('host'=>$this->BROKER_HOST, 'port'=>$this->BROKER_PORT, 'login'=>$this->USER, 'password'=>$this->PASSWORD, 'vhost'=>$this->VHOST);
+            $conn = new AMQPConnection($params);
+            $conn->connect();
+            $channel = new AMQPChannel($conn);
+            $exchange = new AMQPExchange($channel);
+            $exchange->setName($this->exchange);
+            $conn_queue = new AMQPQueue($channel);
+            $conn_queue->setName($this->queue);
+            $conn_queue->bind($exchange->getName(), $this->routing_key);
+            return $exchange->publish($json_message, $this->routing_key);
+        }
+        catch(Exception $e)
+        {
+            error_log("rabbitMQ publish failed: " . $e->getMessage());
+            return false;
+        }
     }
 }
 ?>
