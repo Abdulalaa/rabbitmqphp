@@ -211,7 +211,8 @@ class rabbitMQClient
       $exchange->setType($this->exchange_type);
 
       $callback_queue = new AMQPQueue($channel);
-      $callback_queue->setName($this->queue."_response");
+      $callback_queue->setName($this->queue."_response_".$uid);
+      $callback_queue->setFlags(AMQP_AUTODELETE);
       $callback_queue->declare();
 			$callback_queue->bind($exchange->getName(),$this->routing_key.".response");
 
@@ -225,6 +226,7 @@ class rabbitMQClient
 
 			$response = $this->response_queue[$uid];
 			unset($this->response_queue[$uid]);
+			$conn->disconnect();
 			return $response;
 		}
 		catch(Exception $e)
@@ -234,13 +236,6 @@ class rabbitMQClient
 		}
 	}
 
-	/**
-	  @brief send a one-way message to the server.  These are
-	  auto-acknowledged and give no response.
-
-	  @param message the body of the request.  This must make sense to the
-	  server
-	 */
 	function publish($message)
 	{
 		$json_message = json_encode($message);
