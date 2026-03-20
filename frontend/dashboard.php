@@ -38,6 +38,16 @@ $alerts = $client->send_request(array("type" => "get_alerts", "username" => $cur
 if (!is_array($alerts) || isset($alerts['status'])) {
 	$alerts = array();
 }
+
+$watchlist = $client->send_request(array("type" => "get_watchlist", "username" => $current_username));
+if (!is_array($watchlist) || isset($watchlist['status'])) {
+	$watchlist = array();
+}
+
+$library = $client->send_request(array("type" => "get_library", "username" => $current_username));
+if (!is_array($library) || isset($library['status'])) {
+	$library = array();
+}
 ?>
 
 <!DOCTYPE html>
@@ -103,6 +113,44 @@ if (!is_array($alerts) || isset($alerts['status'])) {
                     <a href="movie.php?id=<?php echo $movie['movie_id']; ?>">View Details</a>
                 </div>
             <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+    <hr>
+
+    <h2>My Watchlist</h2>
+    <div class="movie-grid">
+        <?php if (!empty($watchlist)): ?>
+            <?php foreach ($watchlist as $movie): ?>
+                <div class="movie-card">
+                    <img src="https://image.tmdb.org/t/p/w200<?php echo $movie['poster_path']; ?>" alt="Poster">
+                    <h4><?php echo $movie['title']; ?></h4>
+                    <a href="movie.php?id=<?php echo $movie['movie_id']; ?>">View Details</a>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p>Nothing on your watchlist yet.</p>
+        <?php endif; ?>
+    </div>
+
+    <hr>
+
+    <h2>My Library</h2>
+    <div class="movie-grid">
+        <?php if (!empty($library)): ?>
+            <?php foreach ($library as $movie): ?>
+                <div class="movie-card">
+                    <img src="https://image.tmdb.org/t/p/w200<?php echo $movie['poster_path']; ?>" alt="Poster">
+                    <h4><?php echo $movie['title']; ?></h4>
+                    <p style="font-size:0.8em; color:#555;">
+                        <?php if ($movie['has_seen']) echo "Seen &nbsp;"; ?>
+                        <?php if ($movie['is_owned']) echo "Owned"; ?>
+                    </p>
+                    <a href="movie.php?id=<?php echo $movie['movie_id']; ?>">View Details</a>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <p>Your library is empty.</p>
         <?php endif; ?>
     </div>
 

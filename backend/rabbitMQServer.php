@@ -158,6 +158,10 @@ function requestProcessor($request)
 			return $db->processDailyMovies($request['movies']);
 		case "get_alerts":
 			return $db->getUserAlerts($request['username']);
+		case "get_watchlist":
+			return $db->getWatchlist($request['username']);
+		case "get_library":
+			return $db->getLibrary($request['username']);
 	}
 	// Success message
   	return array("returnCode" => '0', 'message'=>"Server received request and processed");

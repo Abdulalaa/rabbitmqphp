@@ -195,6 +195,46 @@ class MovieDB
         return array("status" => "success", "message" => "Processed new movies and generated $alertsGenerated alerts!");
     }
 
+    public function getWatchlist($username)
+    {
+        $user_query = "SELECT id FROM users WHERE username = '" . $this->db->real_escape_string($username) . "'";
+        $user_result = $this->db->query($user_query);
+        if ($user_result->num_rows == 0) return array();
+        $user_id = $user_result->fetch_assoc()['id'];
+
+        $query = "SELECT m.movie_id, m.title, m.poster_path, m.release_date
+                  FROM user_watchlist w
+                  JOIN movies m ON w.movie_id = m.movie_id
+                  WHERE w.user_id = '$user_id'
+                  ORDER BY w.added_at DESC";
+        $result = $this->db->query($query);
+        $list = array();
+        if ($result) {
+            while ($row = $result->fetch_assoc()) $list[] = $row;
+        }
+        return $list;
+    }
+
+    public function getLibrary($username)
+    {
+        $user_query = "SELECT id FROM users WHERE username = '" . $this->db->real_escape_string($username) . "'";
+        $user_result = $this->db->query($user_query);
+        if ($user_result->num_rows == 0) return array();
+        $user_id = $user_result->fetch_assoc()['id'];
+
+        $query = "SELECT m.movie_id, m.title, m.poster_path, m.release_date, l.has_seen, l.is_owned
+                  FROM user_library l
+                  JOIN movies m ON l.movie_id = m.movie_id
+                  WHERE l.user_id = '$user_id'
+                  ORDER BY m.title ASC";
+        $result = $this->db->query($query);
+        $list = array();
+        if ($result) {
+            while ($row = $result->fetch_assoc()) $list[] = $row;
+        }
+        return $list;
+    }
+
     // Get upcoming movies from db (cron on DMZ fills this table nightly)
     public function getUpcomingMovies()
     {
