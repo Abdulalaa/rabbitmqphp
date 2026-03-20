@@ -34,9 +34,14 @@ $request = array(
 );
 $movie = $client->send_request($request);
 
-// Check if movie not found
 if (empty($movie) || (isset($movie['status']) && $movie['status'] == 'error')) {
     die("Movie not found.");
+}
+
+$client2 = new rabbitMQClient(__DIR__."/../rabbitMQ.ini", "Server");
+$reviews = $client2->send_request(array("type" => "get_reviews", "movie_id" => $movieId));
+if (!is_array($reviews) || isset($reviews['status'])) {
+    $reviews = array();
 }
 ?>
 
@@ -100,6 +105,20 @@ if (empty($movie) || (isset($movie['status']) && $movie['status'] == 'error')) {
         <button onclick="submitReview(<?php echo $movieId; ?>)">Submit Review</button>
         <div id="reviewStatus" style="color: blue; font-weight: bold; margin-top: 10px;"></div>
     </div>
+
+    <?php if (!empty($reviews)): ?>
+    <div class="action-box">
+        <h3>Reviews</h3>
+        <?php foreach ($reviews as $review): ?>
+            <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+                <strong><?php echo htmlspecialchars($review['username'], ENT_QUOTES, 'UTF-8'); ?></strong>
+                &nbsp;<?php echo $review['rating']; ?>/5
+                <p style="margin: 5px 0;"><?php echo htmlspecialchars($review['review_text'], ENT_QUOTES, 'UTF-8'); ?></p>
+                <small style="color:#999;"><?php echo $review['created_at']; ?></small>
+            </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 
     <script>
     const username = <?php echo json_encode($current_username); ?>;

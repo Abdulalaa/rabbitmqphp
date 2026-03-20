@@ -127,6 +127,8 @@ function requestProcessor($request)
 			return $db->getWatchlist($request['username']);
 		case "get_library":
 			return $db->getLibrary($request['username']);
+		case "get_reviews":
+			return $db->getReviews($request['movie_id']);
 	}
   	return array("returnCode" => '0', 'message'=>"Server received request and processed");
 }

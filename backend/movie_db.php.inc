@@ -131,6 +131,22 @@ class MovieDB
         return array("status" => "error", "message" => "Failed to save review: " . $this->db->error);
     }
 
+    public function getReviews($movie_id)
+    {
+        $safe_id = $this->db->real_escape_string($movie_id);
+        $query = "SELECT u.username, r.rating, r.review_text, r.created_at
+                  FROM user_reviews r
+                  JOIN users u ON r.user_id = u.id
+                  WHERE r.movie_id = '$safe_id'
+                  ORDER BY r.created_at DESC";
+        $result = $this->db->query($query);
+        $reviews = array();
+        if ($result) {
+            while ($row = $result->fetch_assoc()) $reviews[] = $row;
+        }
+        return $reviews;
+    }
+
     // Recommendations
     // Logic of our recs: Check what genre/movies user has been logging and rating highly
     // Find highest rated movies in our local cache that this user hasn't already seen or added to watchlist
