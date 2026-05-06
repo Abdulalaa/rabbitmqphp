@@ -1,0 +1,11 @@
+[Unit]
+Description=Decentralized Log Server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/php /home/ryann2/rabbitmqphp/logServer.php
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

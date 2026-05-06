@@ -5,6 +5,7 @@
 require_once(__DIR__.'/../path.inc');
 require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');
+require_once(__DIR__.'/../logPublisher.inc');
 
 // Read the secure config file
 $config = parse_ini_file(__DIR__.'/api_config.ini', true);
@@ -21,6 +22,7 @@ function tmdbRequest($url)
     curl_close($ch);
     if ($response === false)
     {
+        sendLog("CURL error: {$error}");
         echo "CURL error: {$error}".PHP_EOL;
         return false;
     }
@@ -43,6 +45,7 @@ function fetchMoviesFromAPI($searchQuery)
 
     if ($jsonResponse === false)
     {
+        sendLog("Error fetching movies from API for query: $searchQuery");
         echo "Error fetching movies from API".PHP_EOL;
         return [];
     }

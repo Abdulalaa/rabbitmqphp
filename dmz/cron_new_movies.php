@@ -4,6 +4,7 @@
 require_once(__DIR__.'/../path.inc');
 require_once(__DIR__.'/../get_host_info.inc');
 require_once(__DIR__.'/../rabbitMQLib.inc');
+require_once(__DIR__.'/../logPublisher.inc');
 
 // Securely load the API key from the ignored .ini file
 $config = parse_ini_file(__DIR__.'/api_config.ini', true);
@@ -16,6 +17,7 @@ echo "CRON: Waking up to fetch daily new movies...\n";
 $jsonResponse = @file_get_contents($url);
 
 if ($jsonResponse === FALSE) {
+    sendLog("CRON: TMDB upcoming-movies API is unreachable");
     echo "CRON: TMDB API is unreachable. Going back to sleep.\n";
     exit(1);
 }

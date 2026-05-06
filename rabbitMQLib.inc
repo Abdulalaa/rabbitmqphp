@@ -80,6 +80,7 @@ class rabbitMQServer
 		catch(Exception $e)
 		{
             echo "error: rabbitMQServer: process_message: exception caught: ".$e;
+            if (function_exists('sendLog')) sendLog("rabbitMQLib process_message exception: " . $e->getMessage());
 		}
 		$body = $msg->getBody();
 		$payload = json_decode($body, true);
@@ -123,6 +124,7 @@ class rabbitMQServer
 		}
 		catch (Exception $e)
 		{
+            if (function_exists('sendLog')) sendLog("rabbitMQLib process_requests failed: " . $e->getMessage());
 			trigger_error("Failed to start request processor: ".$e,E_USER_ERROR); 
 		}
 	}
@@ -226,6 +228,7 @@ class rabbitMQClient
 		}
 		catch(Exception $e)
 		{
+            if (function_exists('sendLog')) sendLog("rabbitMQLib send_request failed: " . $e->getMessage());
 			error_log("rabbitMQ send_request failed: " . $e->getMessage());
 			return array("status" => "error", "message" => "Connection failed");
 		}
@@ -255,6 +258,7 @@ class rabbitMQClient
 		}
 		catch(Exception $e)
 		{
+            if (function_exists('sendLog')) sendLog("rabbitMQLib publish failed: " . $e->getMessage());
 			error_log("rabbitMQ publish failed: " . $e->getMessage());
 			return false;
 		}

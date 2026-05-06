@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__.'/../logPublisher.inc');
 // Cache, library, watchlist functions to interact w/ mysql
 
 class MovieDB
@@ -11,6 +12,7 @@ class MovieDB
         $this->db = new mysqli("127.0.0.1", "backendVM", "password", "it490_db");
 
         if ($this->db->connect_errno != 0) {
+            sendLog("Backend Database connection failed: " . $this->db->connect_error);
             echo "Error connecting to database: " . $this->db->connect_error . PHP_EOL;
             exit(1);
         }
@@ -52,6 +54,7 @@ class MovieDB
             echo "DB: Successfully cached movie: $title\n";
             return true;
         } else {
+            sendLog("Failed to cache movie {$title}: " . $this->db->error);
             echo "DB: Failed to cache movie: " . $this->db->error . "\n";
             return false;
         }

@@ -1,4 +1,5 @@
 <?php
+require_once(__DIR__.'/../logPublisher.inc');
 
 // Database interaction PHP code
 class loginDB
@@ -15,6 +16,7 @@ public function __construct()
 	// Check if failed connection or credentials
 	if ($this->logindb->connect_errno != 0)
 	{
+		sendLog("Login Database connection failed: " . $this->logindb->connect_error);
 		echo "Error connecting to database: ".$this->logindb->connect_error.PHP_EOL;
 		exit(1);
 	}
