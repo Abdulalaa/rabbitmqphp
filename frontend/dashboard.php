@@ -54,17 +54,10 @@ if (!is_array($library) || isset($library['status'])) {
 <html>
 <head>
     <title>My Vault Dashboard</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 1000px; margin: auto; background-color: #f4f4f9;}
-        .movie-grid { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; }
-        .movie-card { min-width: 150px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); text-align: center; }
-        .movie-card img { width: 100%; border-radius: 5px; }
-        .search-box { margin-bottom: 30px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        input[type="text"] { padding: 10px; width: 70%; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="css/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
+<body class="dashboard-bg">
 
     <h1>Welcome back, <?php echo htmlspecialchars($current_username, ENT_QUOTES, 'UTF-8'); ?>! <a href="processors/logout.php" style="font-size: 0.5em; font-weight: normal;">Log out</a></h1>
 

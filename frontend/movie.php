@@ -49,13 +49,8 @@ if (!is_array($reviews) || isset($reviews['status'])) {
 <html>
 <head>
     <title><?php echo $movie['title']; ?> - IT490 Vault</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-        .movie-header { display: flex; gap: 20px; margin-bottom: 20px; }
-        .movie-poster { max-width: 300px; border-radius: 8px; }
-        .action-box { border: 1px solid #ccc; padding: 15px; border-radius: 8px; margin-top: 20px; }
-        #actionStatus { color: green; font-weight: bold; margin-top: 10px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
