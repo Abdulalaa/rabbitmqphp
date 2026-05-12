@@ -7,9 +7,10 @@ function sendLog($errorMessage)
     {
         $client = new rabbitMQClient(__DIR__."/rabbitMQ.ini", "Logger");
         $request = array(
-            'type'    => "log_error",
-            'machine' => gethostname(),
-            'error'   => $errorMessage,
+            'type'      => "log_error",
+            'timestamp' => date('Y-m-d H:i:s'),
+            'machine'   => gethostname(),
+            'error'     => $errorMessage,
         );
         $client->publish($request);
     }
